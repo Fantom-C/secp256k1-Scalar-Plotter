@@ -35,6 +35,12 @@ Open `calc.html` (or `index.html`) in a browser. Nothing else is required.
 
 The app displays **private keys (WIF)**. Everything runs locally in your browser, but use it responsibly: never publish generated private keys, do not store real funds on browser-generated keys without understanding the risks, and prefer hardware/offline wallets for real money.
 
+### Donations
+
+If you find this project useful, you can support it:
+**Bitcoin (BTC):** `1Eifq7WGfTjLUF6jbdoK9BMqYJ69nEfo7m`
+
+
 ### License
 
 [MIT](LICENSE)
@@ -67,6 +73,12 @@ The app displays **private keys (WIF)**. Everything runs locally in your browser
 ### Безопасность
 
 Приложение показывает **приватные ключи (WIF)**. Всё работает локально в браузере, но используйте ответственно: не публикуйте сгенерированные ключи, не храните реальные средства на ключах, созданных в браузере, без понимания рисков, и предпочитайте аппаратные/офлайн-кошельки.
+
+### Донаты
+
+Если проект полезен, можно поддержать автора:
+**Bitcoin (BTC):** `1Eifq7WGfTjLUF6jbdoK9BMqYJ69nEfo7m`
+
 
 ### Лицензия
 
