@@ -19,7 +19,7 @@ Browser-only **secp256k1** scalar calculator and point visualizer. Single self-c
 - **Scalar `k`**: `k·G`, `k ± m`, `k × m`, `k ÷ m`, `k mod m`, `gcd(k, m)`, `k^m`, `m^k`, `2^k`, `10^k`, `k²`, `k³`, `√k (mod N)`, `ᵐ√k`, `k⁻¹`, `−k`, `λ·k`.
 - **Cryptographically strong random `k`** (`crypto.getRandomValues`, rejection sampling in `[1, N−1]`).
 - **On-screen keypad** for `k` and `m`: `0–9`, `A–F`, `⌫`, `C`, `0x`, `k→m`, `m→k`, HEX/DEC.
-- **Point operations**: `P±G`, `P±2G`, `2P`, `P/2`, `k·P`, `m·P`, `P±k·G`, `X·β`, manual `X`/`Y`.
+- **Point operations**: `P±G`, `P±2G`, `2P`, `P/2`, `k·P`, `m·P`, `P±k·G`, `X·β`; manual `X`/`Y` input with **automatic Y calculation** (enter X → Y is derived as the symmetric root) and on-curve validation.
 - **Point log** with `k` (DEC/HEX/SIGNED), `X`, `Y` and Bitcoin data:
   - **P2PKH** (compressed/uncompressed), **P2SH-P2WPKH**, **P2WPKH**, **P2TR**;
   - **WIF** private keys (compressed/uncompressed) when the point scalar is known;
@@ -58,7 +58,7 @@ If you find this project useful, you can support it:
 - **Скаляр `k`**: `k·G`, `k ± m`, `k × m`, `k ÷ m`, `k mod m`, `gcd(k, m)`, `k^m`, `m^k`, `2^k`, `10^k`, `k²`, `k³`, `√k (mod N)`, `ᵐ√k`, `k⁻¹`, `−k`, `λ·k`.
 - **Криптостойкий случайный `k`** (`crypto.getRandomValues`, rejection sampling в `[1, N−1]`).
 - **Экранная клавиатура** для `k` и `m`: `0–9`, `A–F`, `⌫`, `C`, `0x`, `k→m`, `m→k`, HEX/DEC.
-- **Операции с точкой**: `P±G`, `P±2G`, `2P`, `P/2`, `k·P`, `m·P`, `P±k·G`, `X·β`, ручной ввод `X`/`Y`.
+- **Операции с точкой**: `P±G`, `P±2G`, `2P`, `P/2`, `k·P`, `m·P`, `P±k·G`, `X·β`, ручной ввод `X`/`Y` с **автоматическим расчётом Y** (по `X` вычисляется Y как симметричный корень) и проверкой принадлежности точки кривой.
 - **Лог точек** с `k` (DEC/HEX/SIGNED), `X`, `Y` и данными Bitcoin:
   - **P2PKH** (compressed/uncompressed), **P2SH-P2WPKH**, **P2WPKH**, **P2TR**;
   - **WIF** приватные ключи (compressed/uncompressed), если скаляр точки известен;
