@@ -161,6 +161,23 @@
   }
   .op-buttons { display:flex; flex-wrap:wrap; gap:4px; }
   .op-buttons button { margin:0; padding:5px 8px; font-size:12px; }
+  .mem-group { margin-top:10px; }
+  .mem-slots { display:flex; gap:4px; flex-wrap:wrap; margin:0 0 6px; }
+  .mem-slot {
+    flex:0 0 auto; min-width:32px; padding:2px 6px; font-size:11px;
+    border-color:#37474f; color:#78909c;
+  }
+  .mem-slot.filled { border-color:#4db6ac; color:#4db6ac; }
+  .mem-slot.active {
+    border-color:#64b5f6; color:#64b5f6;
+    box-shadow:0 0 0 1px rgba(100,181,246,0.35);
+  }
+  .mem-buttons button { padding:4px 7px; }
+  .mem-info {
+    margin-top:4px; font-size:10px; line-height:1.4; color:#78909c;
+    word-break:break-all;
+  }
+  button.mem { border-color:#64b5f6; color:#64b5f6; }
   .op-grid {
     display:grid; grid-template-columns: repeat(4, minmax(0, 1fr));
     gap:10px 16px; margin-top:12px;
@@ -259,6 +276,27 @@
           <span class="unit">Основание:</span>
           <button id="baseHexBtn" class="base-btn" onclick="uiSetBase(16)">HEX</button>
           <button id="baseDecBtn" class="base-btn active" onclick="uiSetBase(10)">DEC</button>
+        </div>
+
+        <div class="op-group mem-group">
+          <span class="op-title">Память</span>
+          <div class="mem-slots" id="memSlots">
+            <button class="mem-slot active" onclick="uiMemSelect(0)">M1</button>
+            <button class="mem-slot" onclick="uiMemSelect(1)">M2</button>
+            <button class="mem-slot" onclick="uiMemSelect(2)">M3</button>
+            <button class="mem-slot" onclick="uiMemSelect(3)">M4</button>
+            <button class="mem-slot" onclick="uiMemSelect(4)">M5</button>
+            <button class="mem-slot" onclick="uiMemSelect(5)">M6</button>
+          </div>
+          <div class="op-buttons mem-buttons">
+            <button class="mem" onclick="uiMemStore()" title="Memory: сохранить точку текущего скаляра k·G в память и скопировать её в X/Y">Память</button>
+            <button class="mem" onclick="uiMemRecall()" title="MR: скопировать точку из памяти в поля X/Y">MR</button>
+            <button class="mem" onclick="uiMemAdd()" title="M+: прибавить k·G к точке в памяти и нарисовать результат (память не меняется)">M+</button>
+            <button class="mem" onclick="uiMemSub()" title="M−: вычесть k·G из точки в памяти и нарисовать результат (память не меняется)">M−</button>
+            <button class="mem" onclick="uiMemMulK()" title="M·k: умножить точку из памяти на текущий скаляр k и нарисовать результат (память не меняется)">M·k</button>
+            <button class="mem warn" onclick="uiMemClear()" title="MC: очистить память">MC</button>
+          </div>
+          <div id="memInfo" class="mem-info">M1: —</div>
         </div>
       </div>
       <div class="kp-pad" id="kpPad">
@@ -434,7 +472,7 @@
 <div id="status">Готово.</div>
 
 <div id="footer">
-  <div>secp256k1 scalar plotter v1.1 · by <b>Fantom-C</b></div>
+  <div>secp256k1 scalar plotter v1.2 · by <b>Fantom-C</b></div>
   <div class="donate">
     <span class="donate-label">₿ donate:</span>
     <span class="donate-addr"><b>1Eifq7WGfTjLUF6jbdoK9BMqYJ69nEfo7m<b></span>
@@ -1711,6 +1749,22 @@ const EN_STRINGS = {
     'Открыть на blockchain.com': 'Open on blockchain.com',
     'Приватные ключи (WIF)': 'Private keys (WIF)',
     'Приватный ключ — не показывайте никому': 'Private key — do not share with anyone',
+    'Память': 'Memory',
+    'Память: {1} = k·G': 'Memory: {1} = k·G',
+    'Активная память: {1}': 'Active memory: {1}',
+    'Ячейка памяти {1}': 'Memory slot {1}',
+    'Память {1} очищена': 'Memory {1} cleared',
+    'Память пуста': 'Memory slot is empty',
+    'Память очищена': 'Memory cleared',
+    'Скопировано из памяти в X/Y': 'Copied from memory to X/Y',
+    'M = ∞ (память пуста)': 'M = ∞ (memory cleared)',
+    'Memory: сохранить точку текущего скаляра k·G в память и скопировать её в X/Y': 'Memory: store the current scalar point k·G and copy it to X/Y',
+    'MR: скопировать точку из памяти в поля X/Y': 'MR: copy the memory point to the X/Y fields',
+    'M+: прибавить k·G к точке в памяти и нарисовать результат (память не меняется)': 'M+: add k·G to the memory point and draw the result (memory stays unchanged)',
+    'M−: вычесть k·G из точки в памяти и нарисовать результат (память не меняется)': 'M−: subtract k·G from the memory point and draw the result (memory stays unchanged)',
+    'M·k: умножить точку из памяти на текущий скаляр k и нарисовать результат (память не меняется)': 'M·k: multiply the memory point by the current scalar k and draw the result (memory stays unchanged)',
+    '(память не изменена)': '(memory unchanged)',
+    'MC: очистить память': 'MC: clear memory',
     'Нажмите, чтобы скопировать приватный ключ': 'Click to copy the private key',
     'Скопировано: {1}': 'Copied: {1}',
     'Не удалось скопировать': 'Copy failed',
@@ -1919,6 +1973,7 @@ function applyLanguage() {
     kpSetTarget(kpTargetEl || scalarIn);
     renderLegend(plotter.points);
     refreshAutoButtons();
+    updateMemButtons();
 }
 
 function setLang(lang) {
@@ -2154,6 +2209,13 @@ function uiRandomK() {
     } catch (e) { setStatus(t('Ошибка: ') + e.message); console.error(e); }
 }
 
+function findLoggedPointByX(x) {
+    for (let i = plotter.points.length - 1; i >= 0; i--) {
+        if (plotter.points[i].x === x) return plotter.points[i];
+    }
+    return null;
+}
+
 function uiXChanged() {
     const xs = document.getElementById('xIn').value.trim();
     if (!xs) return;
@@ -2163,26 +2225,47 @@ function uiXChanged() {
             setStatus(t('X должен быть в [0, P-1]'));
             return;
         }
-        const y = computeYFromX(x);
-        if (y === null) {
-            document.getElementById('yIn').value = '';
-            setStatus(
-                `X = 0x${x.toString(16)}\n` +
-                t('x³ + 7 не является квадратом mod P.') + '\n' +
-                t('Точки на кривой с таким X не существует.')
-            );
-            return;
+
+        const yEl = document.getElementById('yIn');
+        let yChoice = null;
+
+        if (yEl.value.trim()) {
+            try {
+                const yInput = plotter._parseBig(yEl.value.trim());
+                if (yInput >= 0n && yInput < P && mod(yInput * yInput, P) === mod(x * x * x + 7n, P)) {
+                    yChoice = yInput;
+                }
+            } catch (e) { /* ignore */ }
         }
-        const ySym = (y > P_HALF) ? (P - y) : y;
-        document.getElementById('yIn').value = '0x' + ySym.toString(16);
+
+        if (yChoice === null) {
+            const logged = findLoggedPointByX(x);
+            if (logged) {
+                yChoice = logged.y;
+            } else {
+                const y = computeYFromX(x);
+                if (y === null) {
+                    yEl.value = '';
+                    setStatus(
+                        `X = 0x${x.toString(16)}\n` +
+                        t('x³ + 7 не является квадратом mod P.') + '\n' +
+                        t('Точки на кривой с таким X не существует.')
+                    );
+                    return;
+                }
+                yChoice = (y > P_HALF) ? (P - y) : y;
+            }
+        }
+
+        yEl.value = '0x' + yChoice.toString(16);
 
         const label = `P${plotter.points.length + 1}`;
-        plotter.addPoint(x, ySym, label);
+        plotter.addPoint(x, yChoice, label);
         plotter.draw();
-        updateCircles(undefined, x, ySym);
+        updateCircles(undefined, x, yChoice);
         setStatus(
             `X = 0x${x.toString(16)}\n` +
-            t('Y = 0x{1}   (и −Y = 0x{2})', ySym.toString(16), (P - ySym).toString(16)) + '\n' +
+            t('Y = 0x{1}   (и −Y = 0x{2})', yChoice.toString(16), (P - yChoice).toString(16)) + '\n' +
             t('Точка на кривой. Автоматически добавлена как {1}.', label)
         );
     } catch (e) {
@@ -2351,6 +2434,141 @@ function uiPointHalf() {
     } catch (e) { setStatus(t('Ошибка: ') + e.message); console.error(e); }
 }
 
+const MEM_SLOT_COUNT = 6;
+const memSlots = new Array(MEM_SLOT_COUNT).fill(null);
+let memActive = 0;
+
+function memCurrent() { return memSlots[memActive]; }
+function memSlotLabel() { return 'M' + (memActive + 1); }
+
+function updateMemInfo() {
+    const el = document.getElementById('memInfo');
+    if (!el) return;
+    const slot = memCurrent();
+    const label = memSlotLabel();
+    if (!slot) { el.textContent = label + ': —'; return; }
+    const kStr = (slot.scalar === null || slot.scalar === undefined) ? '—' : shortHex(slot.scalar);
+    el.textContent = `${label}: ${shortHex(slot.x)}  k = ${kStr}`;
+}
+
+function updateMemButtons() {
+    const wrap = document.getElementById('memSlots');
+    if (!wrap) return;
+    [...wrap.children].forEach((btn, i) => {
+        btn.classList.toggle('active', i === memActive);
+        btn.classList.toggle('filled', !!memSlots[i]);
+        btn.title = t('Ячейка памяти {1}', i + 1);
+    });
+}
+
+function memSet(pt, scalar) {
+    memSlots[memActive] = pt
+        ? { x: pt.x, y: pt.y, scalar: (scalar === undefined ? null : scalar) }
+        : null;
+    updateMemInfo();
+    updateMemButtons();
+}
+
+function uiMemSelect(idx) {
+    if (idx < 0 || idx >= MEM_SLOT_COUNT) return;
+    memActive = idx;
+    updateMemInfo();
+    updateMemButtons();
+    setStatus(t('Активная память: {1}', memSlotLabel()));
+}
+
+function memCoords(pt) {
+    return `X = 0x${pt.x.toString(16)}\nY = 0x${pt.y.toString(16)}`;
+}
+
+function uiMemStore() {
+    try {
+        const k = readK();
+        const Pt = scalarMul(k);
+        if (!Pt) { setStatus(t('M = ∞ (память пуста)')); return; }
+        memSet(Pt, k);
+        document.getElementById('xIn').value = '0x' + Pt.x.toString(16);
+        document.getElementById('yIn').value = '0x' + Pt.y.toString(16);
+        updateCircles(k, Pt.x, Pt.y);
+        setStatus(
+            t('Память: {1} = k·G', memSlotLabel()) + '\n' +
+            scalarStatusBlock(k) + '\n' +
+            t('Скопировано из памяти в X/Y')
+        );
+    } catch (e) { setStatus(t('Ошибка: ') + e.message); console.error(e); }
+}
+
+function uiMemRecall() {
+    const slot = memCurrent();
+    if (!slot) { setStatus(t('Память пуста')); return; }
+    document.getElementById('xIn').value = '0x' + slot.x.toString(16);
+    document.getElementById('yIn').value = '0x' + slot.y.toString(16);
+    updateCircles(slot.scalar !== null && slot.scalar !== undefined ? slot.scalar : undefined, slot.x, slot.y);
+    setStatus(
+        t('Скопировано из памяти в X/Y') + '\n' +
+        memCoords(slot) +
+        (slot.scalar !== null && slot.scalar !== undefined ? '\n' + scalarStatusBlock(slot.scalar) : '')
+    );
+}
+
+function memAdjust(sign) {
+    try {
+        const k = readK();
+        const kG = scalarMul(k);
+        if (!kG) { setStatus('k·G = ∞ (k ≡ 0 mod N)'); return; }
+
+        const slotTag = memSlotLabel();
+        const label = sign > 0 ? slotTag + '+k·G' : slotTag + '−k·G';
+        const other = sign > 0 ? kG : pointNegate(kG);
+        const delta = sign > 0 ? k : mod(-k, N);
+        const slot = memCurrent();
+
+        if (!slot) {
+            memSet(other, delta);
+            updateXYAndAdd(other, label, delta);
+            pointStatus(label, other, delta);
+            return;
+        }
+
+        const res = pointAddAffine(slot, other);
+        if (!res) {
+            setStatus(label + ' = ∞ ' + t('(память не изменена)'));
+            return;
+        }
+
+        let ns = null;
+        if (slot.scalar !== null && slot.scalar !== undefined) {
+            ns = mod(slot.scalar + delta, N);
+        }
+        updateXYAndAdd(res, label, ns);
+        pointStatus(label, res, ns);
+    } catch (e) { setStatus(t('Ошибка: ') + e.message); console.error(e); }
+}
+
+function uiMemAdd() { memAdjust(1); }
+function uiMemSub() { memAdjust(-1); }
+
+function uiMemMulK() {
+    try {
+        const slot = memCurrent();
+        if (!slot) { setStatus(t('Память пуста')); return; }
+        const k = readK();
+        const label = memSlotLabel() + '·k';
+        const res = scalarMul(k, slot);
+        if (!res) { setStatus(label + ' = ∞ ' + t('(память не изменена)')); return; }
+        let ns = null;
+        if (slot.scalar !== null && slot.scalar !== undefined) ns = mod(slot.scalar * k, N);
+        updateXYAndAdd(res, label, ns);
+        pointStatus(label, res, ns);
+    } catch (e) { setStatus(t('Ошибка: ') + e.message); console.error(e); }
+}
+
+function uiMemClear() {
+    const label = memSlotLabel();
+    memSet(null, null);
+    setStatus(t('Память {1} очищена', label));
+}
+
 function getEnteredPoint() {
     const xs = document.getElementById('xIn').value.trim();
     const ys = document.getElementById('yIn').value.trim();
@@ -2365,9 +2583,14 @@ function getEnteredPoint() {
             throw new Error(t('Точка (x, y) не лежит на кривой'));
         }
     } else {
-        const yy = computeYFromX(x);
-        if (yy === null) throw new Error(t('Точки на кривой с таким X не существует.'));
-        y = (yy > P_HALF) ? (P - yy) : yy;
+        const logged = findLoggedPointByX(x);
+        if (logged) {
+            y = logged.y;
+        } else {
+            const yy = computeYFromX(x);
+            if (yy === null) throw new Error(t('Точки на кривой с таким X не существует.'));
+            y = (yy > P_HALF) ? (P - yy) : yy;
+        }
         document.getElementById('yIn').value = '0x' + y.toString(16);
     }
     let scalar = null;

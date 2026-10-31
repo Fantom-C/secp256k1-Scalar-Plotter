@@ -19,7 +19,8 @@ Browser-only **secp256k1** scalar calculator and point visualizer. Single self-c
 - **Scalar `k`**: `k·G`, `k ± m`, `k × m`, `k ÷ m`, `k mod m`, `gcd(k, m)`, `k^m`, `m^k`, `2^k`, `10^k`, `k²`, `k³`, `√k (mod N)`, `ᵐ√k`, `k⁻¹`, `−k`, `λ·k`.
 - **Cryptographically strong random `k`** (`crypto.getRandomValues`, rejection sampling in `[1, N−1]`).
 - **On-screen keypad** for `k` and `m`: `0–9`, `A–F`, `⌫`, `C`, `0x`, `k→m`, `m→k`, HEX/DEC.
-- **Point operations**: `P±G`, `P±2G`, `2P`, `P/2`, `k·P`, `m·P`, `P±k·G`, `X·β`; manual `X`/`Y` input with **automatic Y calculation** (enter X → Y is derived as the symmetric root) and on-curve validation.
+- **Point operations**: `P±G`, `P±2G`, `2P`, `P/2`, `k·P`, `m·P`, `P±k·G`, `X·β`; manual `X`/`Y` input with **automatic Y calculation** (enter X → Y is taken from a matching logged point, otherwise derived) and on-curve validation.
+- **Memory (6 slots M1–M6)**: select a slot, store the current `k·G` point (also copied to X/Y), recall it, add/subtract `k·G` to/from the selected slot's point, multiply it by `k`; results are drawn on the plot and added to the log. A stored slot is not overwritten by these operations — it changes only via **Memory** (store) or **MC** (clear).
 - **Point log** with `k` (DEC/HEX/SIGNED), `X`, `Y` and Bitcoin data:
   - **P2PKH** (compressed/uncompressed), **P2SH-P2WPKH**, **P2WPKH**, **P2TR**;
   - **WIF** private keys (compressed/uncompressed) when the point scalar is known;
@@ -29,7 +30,7 @@ Browser-only **secp256k1** scalar calculator and point visualizer. Single self-c
 
 ### Run
 
-Open `calc.html` (or `index.html`) in a browser. Nothing else is required.
+Open `index.html` in a browser. Nothing else is required.
 
 ### Security warning
 
@@ -58,7 +59,8 @@ If you find this project useful, you can support it:
 - **Скаляр `k`**: `k·G`, `k ± m`, `k × m`, `k ÷ m`, `k mod m`, `gcd(k, m)`, `k^m`, `m^k`, `2^k`, `10^k`, `k²`, `k³`, `√k (mod N)`, `ᵐ√k`, `k⁻¹`, `−k`, `λ·k`.
 - **Криптостойкий случайный `k`** (`crypto.getRandomValues`, rejection sampling в `[1, N−1]`).
 - **Экранная клавиатура** для `k` и `m`: `0–9`, `A–F`, `⌫`, `C`, `0x`, `k→m`, `m→k`, HEX/DEC.
-- **Операции с точкой**: `P±G`, `P±2G`, `2P`, `P/2`, `k·P`, `m·P`, `P±k·G`, `X·β`, ручной ввод `X`/`Y` с **автоматическим расчётом Y** (по `X` вычисляется Y как симметричный корень) и проверкой принадлежности точки кривой.
+- **Операции с точкой**: `P±G`, `P±2G`, `2P`, `P/2`, `k·P`, `m·P`, `P±k·G`, `X·β`, ручной ввод `X`/`Y` с **автоматическим расчётом Y** (по `X` берётся Y совпадающей точки из лога, иначе вычисляется) и проверкой принадлежности точки кривой.
+- **Память (6 ячеек M1–M6)**: выберите ячейку, сохраните текущую точку `k·G` (сразу копируется в X/Y), выведите её обратно, прибавьте/вычтите `k·G` к/из точки выбранной ячейки, умножьте её на `k`; результаты рисуются на графике и добавляются в лог. Точка в ячейке при этих операциях не перезаписывается — изменить её можно только кнопкой **Память** (сохранить) или **MC** (очистить).
 - **Лог точек** с `k` (DEC/HEX/SIGNED), `X`, `Y` и данными Bitcoin:
   - **P2PKH** (compressed/uncompressed), **P2SH-P2WPKH**, **P2WPKH**, **P2TR**;
   - **WIF** приватные ключи (compressed/uncompressed), если скаляр точки известен;
@@ -68,7 +70,7 @@ If you find this project useful, you can support it:
 
 ### Запуск
 
-Откройте `calc.html` (или `index.html`) в браузере — больше ничего не нужно.
+Откройте `index.html` в браузере — больше ничего не нужно.
 
 ### Безопасность
 
