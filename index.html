@@ -51,6 +51,13 @@
     gap:12px; flex-wrap:wrap; margin-bottom:8px;
   }
   #pageHead h3 { margin:0; }
+  #topControls {
+    display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+    justify-content:flex-end;
+  }
+  #graphOpts { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  #graphOpts label.chk { color:#aaa; font-size:12px; user-select:none; }
+  #graphOpts label.chk input { vertical-align:middle; margin-right:4px; }
   #langSwitch { display:flex; gap:6px; align-items:center; flex-shrink:0; }
   #langSwitch button {
     margin:0; padding:4px 12px; font-size:12px; letter-spacing:0.5px;
@@ -229,6 +236,32 @@
   button.root { border-color:#18ffff; color:#18ffff; }
   button.cmp  { border-color:#ffd54f; color:#ffd54f; }
   button.rnd  { border-color:#ffab40; color:#ffab40; }
+  button.mirror { border-color:#80cbc4; color:#80cbc4; }
+
+  .auto-ops { margin-top:10px; }
+  .auto-head {
+    display:flex; align-items:baseline; justify-content:space-between; gap:8px;
+  }
+  .auto-head .op-title { margin-bottom:0; }
+  .auto-value-row {
+    display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:6px;
+  }
+  .auto-value-row input.num { width:100%; flex:1 1 100%; }
+  .auto-op-row {
+    display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:6px;
+  }
+  button.auto-op {
+    margin:0; min-width:36px; padding:4px 10px; font-size:14px;
+    color:#90a4ae; border-color:#37474f; background:#101010;
+    transition: color .15s, border-color .15s, background .15s, box-shadow .15s;
+  }
+  button.auto-op:hover { color:#e0e0e0; border-color:#666; }
+  button.auto-op.active {
+    color:#00e676; border-color:#00e676; background:rgba(0, 230, 118, 0.10);
+    box-shadow: 0 0 0 1px rgba(0,230,118,0.25), 0 0 10px rgba(0,230,118,0.12);
+    font-weight:bold;
+  }
+  .auto-preview { color:#78909c; font-size:11px; }
 
   @media (max-width: 1100px) {
     #controls { grid-template-columns: 1fr; }
@@ -240,6 +273,8 @@
     #plotPanel, #legend, #circlePanel { flex:1 1 100%; max-width:none; min-width:0; }
     #legend { height: auto; max-height: 45vh; }
     .panel { padding:8px; }
+    #topControls { width:100%; justify-content:flex-start; gap:10px; }
+    #graphOpts { gap:10px; }
     #keypad input.scalar, #pointPanel input.scalar { width:100%; }
     .kp-pad {
       grid-template-columns: repeat(5, 1fr);
@@ -260,10 +295,16 @@
 
 <div id="pageHead">
   <h3>Визуализация точек secp256k1 (скаляр · G)</h3>
-  <div id="langSwitch">
-    <button id="langEnBtn" class="active" onclick="setLang('en')">EN</button>
-    <button id="langRuBtn" onclick="setLang('ru')">RU</button>
-    <button id="balanceBtn" class="balance-btn" onclick="uiToggleBalances()" title="Проверка полученной суммы">Получено</button>
+  <div id="topControls">
+    <div id="graphOpts">
+      <label class="chk"><input type="checkbox" id="fixedScaleChk" checked onchange="uiToggleScale()">фиксированный масштаб</label>
+      <label class="chk"><input type="checkbox" id="symYChk" checked onchange="uiToggleSymY()">симметричный Y</label>
+    </div>
+    <div id="langSwitch">
+      <button id="langEnBtn" class="active" onclick="setLang('en')">EN</button>
+      <button id="langRuBtn" onclick="setLang('ru')">RU</button>
+      <button id="balanceBtn" class="balance-btn" onclick="uiToggleBalances()" title="Проверка полученной суммы">Получено</button>
+    </div>
   </div>
 </div>
 
@@ -391,8 +432,10 @@
           <button onclick="uiHalf()">÷2</button>
           <button class="lambda" onclick="uiMulLambda()">λ · k</button>
           <button class="minus" onclick="uiOpNeg()">−k (mod N)</button>
-            <button onclick="uiResetK()">Сброс k = 1</button>
-            <button class="rnd" onclick="uiRandomK()" title="Криптостойкий случайный скаляр k (CSPRNG)">Случайный k</button>
+          <button onclick="uiResetK()">Сброс k = 1</button>
+          <button class="rnd" onclick="uiRandomK()" title="Криптостойкий случайный скаляр k (CSPRNG)">Случайный k</button>
+          <button class="mirror" onclick="uiMirror()" title="Mirror: max − k (отражение от 0 до max)">Mirror</button>
+          <button class="mirror" onclick="uiMirrorD()" title="Mirror D: min + max − k (отражение внутри диапазона степеней двойки)">Mirror D</button>
         </div>
       </div>
 
@@ -466,30 +509,32 @@
     </section>
 
     <section id="autoPanel" class="panel">
-      <div class="panel-title"><span>Масштаб и авто-режимы</span></div>
-      <div class="row" style="margin-top:0">
-        <label class="chk"><input type="checkbox" id="fixedScaleChk" checked onchange="uiToggleScale()">фиксированный масштаб</label>
-        <label class="chk"><input type="checkbox" id="symYChk" checked onchange="uiToggleSymY()">симметричный Y</label>
+      <div class="panel-title"><span>Авто-режим</span></div>
+
+      <div class="auto-ops">
+        <div class="auto-head">
+          <span class="op-title">Действие</span>
+          <span id="autoOpPreview" class="auto-preview">k ÷ 2</span>
+        </div>
+        <div class="auto-value-row">
+          <input id="autoValue" class="num" type="text" value="2" placeholder="2" oninput="updateAutoOpUI()" title="Значение для операции (DEC или 0x…)">
+        </div>
+        <div class="auto-op-row">
+          <button id="autoOpDiv" class="auto-op active" onclick="uiSelectAutoOp('div')" title="Деление">÷</button>
+          <button id="autoOpMul" class="auto-op" onclick="uiSelectAutoOp('mul')" title="Умножение">×</button>
+          <button id="autoOpSub" class="auto-op" onclick="uiSelectAutoOp('sub')" title="Вычитание">−</button>
+          <button id="autoOpAdd" class="auto-op" onclick="uiSelectAutoOp('add')" title="Сложение">+</button>
+        </div>
       </div>
 
       <div class="row auto-row">
-        <label style="color:#bbb">Авто ÷2:</label>
-        <input id="autoIntervalUs" class="num" type="number" value="10000" min="1" step="1" title="Интервал между делениями, микросекунды">
+        <label style="color:#bbb">Интервал:</label>
+        <input id="autoIntervalUs" class="num" type="number" value="10000" min="1" step="1" title="Интервал, микросекунды">
         <span class="unit">µs</span>
         <span class="target-label">log₂ ≤</span>
-        <input id="autoHalfTarget" class="num-sm" type="number" placeholder="(нет)" min="0" max="256" step="0.01" title="Стоп после действия, когда log₂(k) ≤ target. Пусто = без ограничения.">
-        <button id="autoHalfBtn" class="primary" onclick="uiToggleAutoHalf()">▶ Авто ÷2</button>
-        <span id="autoHalfInfo" style="color:#ffd54f; margin-left:8px; font-family:monospace"></span>
-      </div>
-
-      <div class="row auto-row">
-        <label style="color:#bbb">Авто ×2:</label>
-        <input id="autoMul2IntervalUs" class="num" type="number" value="10000" min="1" step="1" title="Интервал между умножениями, микросекунды">
-        <span class="unit">µs</span>
-        <span class="target-label">log₂ ≤</span>
-        <input id="autoMul2Target" class="num-sm" type="number" placeholder="(нет)" min="0" max="256" step="0.01" title="Стоп после действия, когда log₂(k) ≤ target. Пусто = без ограничения.">
-        <button id="autoMul2Btn" class="primary" onclick="uiToggleAutoMul2()">▶ Авто ×2</button>
-        <span id="autoMul2Info" style="color:#ffd54f; margin-left:8px; font-family:monospace"></span>
+        <input id="autoTarget" class="num-sm" type="number" placeholder="(нет)" min="0" max="256" step="0.01" title="Стоп после действия, когда log₂(k) ≤ target. Пусто = без ограничения.">
+        <button id="autoBtn" class="primary" onclick="uiToggleAuto()">▶ Авто</button>
+        <span id="autoInfo" style="color:#ffd54f; margin-left:8px; font-family:monospace">×0</span>
       </div>
     </section>
   </div>
@@ -1991,6 +2036,8 @@ const EN_STRINGS = {
     'Сброс k = 1': 'Reset k = 1',
     'Случайный k': 'Random k',
     'Криптостойкий случайный скаляр k (CSPRNG)': 'Cryptographically strong random scalar k (CSPRNG)',
+    'Mirror: max − k (отражение от 0 до max)': 'Mirror: max − k (reflect within 0..max)',
+    'Mirror D: min + max − k (отражение внутри диапазона степеней двойки)': 'Mirror D: min + max − k (reflect within the power-of-two band)',
     'Точка на кривой': 'Point on curve',
     'Добавить / вычислить': 'Add / compute',
     'Добавить точку': 'Add point',
@@ -1999,6 +2046,18 @@ const EN_STRINGS = {
     'Точка и скаляр': 'Point & scalar',
     'Базисные точки': 'Basis points',
     'Масштаб и авто-режимы': 'Scale & auto modes',
+    'Масштаб и авто-режим': 'Scale & auto mode',
+    'Авто-режим': 'Auto mode',
+    'Действие': 'Operation',
+    'Деление': 'Division',
+    'Умножение': 'Multiplication',
+    'Вычитание': 'Subtraction',
+    'Сложение': 'Addition',
+    'Интервал:': 'Interval:',
+    'Интервал, микросекунды': 'Interval, microseconds',
+    'Значение для операции (DEC или 0x…)': 'Operation value (DEC or 0x…)',
+    '▶ Авто': '▶ Auto',
+    '■ Стоп Авто': '■ Stop Auto',
     'фиксированный масштаб': 'fixed scale',
     'симметричный Y': 'symmetric Y',
     'Авто ÷2:': 'Auto ÷2:',
@@ -2128,6 +2187,21 @@ const EN_STRINGS = {
     'Авто ×2 остановлено: достигнута цель log₂(k) ≤ {1}.': 'Auto ×2 stopped: reached goal log₂(k) ≤ {1}.',
     'Авто ÷2 остановлено из-за ошибки: ': 'Auto ÷2 stopped due to an error: ',
     'Авто ×2 остановлено из-за ошибки: ': 'Auto ×2 stopped due to an error: ',
+    'Действие: {1}': 'Action: {1}',
+    'введите значение для действия': 'enter a value for the action',
+    'Ошибка: делитель ≡ 0 mod N.': 'Error: divisor ≡ 0 mod N.',
+    'Ошибка: значение 1 не меняет k.': 'Error: value 1 does not change k.',
+    'Ошибка: значение 0 не меняет k.': 'Error: value 0 does not change k.',
+    'Ошибка: введите положительный интервал в микросекундах.': 'Error: enter a positive interval in microseconds.',
+    'log₂-цель': 'log₂ goal',
+    'Авто запущено: {1}': 'Auto started: {1}',
+    'Интервал: {1} µs (→ {2} операций/сек)': 'Interval: {1} µs (→ {2} ops/sec)',
+    'Проверка цели — после действия.': 'Goal is checked after each action.',
+    'Авто остановлено вручную.': 'Auto stopped manually.',
+    'Выполнено операций: {1}': 'Operations performed: {1}',
+    'Авто остановлено: k = 0 (∞).': 'Auto stopped: k = 0 (∞).',
+    'Авто остановлено: достигнута цель log₂(k) ≤ {1}.': 'Auto stopped: reached goal log₂(k) ≤ {1}.',
+    'Авто остановлено из-за ошибки: ': 'Auto stopped due to an error: ',
     '(вероятно, k обернулся через N — log₂ резко упал)': '(probably k wrapped through N — log₂ dropped sharply)'
 };
 
@@ -2148,7 +2222,7 @@ function collectStaticText() {
         const el = node.parentElement;
         if (!el) continue;
         if (el.tagName === 'SCRIPT' || el.tagName === 'STYLE') continue;
-        if (el.closest('#status, #legendList, #kpTargetInfo, #autoHalfInfo, #autoMul2Info, #autoHalfBtn, #autoMul2Btn')) continue;
+        if (el.closest('#status, #legendList, #kpTargetInfo, #autoInfo, #autoBtn, #autoOpPreview')) continue;
         const raw = node.nodeValue;
         if (!raw.trim()) continue;
         staticTexts.push({ node, raw, ru: raw.trim() });
@@ -2170,8 +2244,7 @@ function applyStaticText() {
 }
 
 function refreshAutoButtons() {
-    setAutoBtnRunning('autoHalfBtn', autoHalfTimer !== null, 'Авто ÷2');
-    setAutoBtnRunning('autoMul2Btn', autoMul2Timer !== null, 'Авто ×2');
+    setAutoBtnRunning('autoBtn', autoTimer !== null, 'Авто');
 }
 
 function applyLanguage() {
@@ -2184,6 +2257,7 @@ function applyLanguage() {
     renderLegend(plotter.points);
     refreshAutoButtons();
     updateMemButtons();
+    updateAutoOpUI();
     updateBalanceBtn();
 }
 
@@ -2419,6 +2493,43 @@ function uiRandomK() {
         setStatus(t('Случайный k (CSPRNG):') + '\n' + scalarStatusBlock(k) + '\n' + describeKPosition(k));
     } catch (e) { setStatus(t('Ошибка: ') + e.message); console.error(e); }
 }
+
+function scalarBand(k) {
+    if (k <= 0n) return { min: 0n, max: 1n };
+    const max = 1n << BigInt(k.toString(2).length);
+    return { min: max >> 1n, max };
+}
+
+function uiMirrorOp(kind) {
+    try {
+        const k = mod(parseScalar(scalarIn.value), N);
+        const band = scalarBand(k);
+        const nk = mod(kind === 'd' ? band.min + band.max - k : band.max - k, N);
+
+        setScalarInput(nk);
+        const Pt = scalarMul(nk);
+        updateCircles(nk, Pt ? Pt.x : null, Pt ? Pt.y : null);
+
+        const title = (kind === 'd') ? 'Mirror D: min + max − k' : 'Mirror: max − k';
+        const bandText =
+            `k = ${k.toString(10)}\n` +
+            `min = ${band.min.toString(10)}\n` +
+            `max = ${band.max.toString(10)}\n` +
+            `k′ = ${nk.toString(10)}`;
+
+        if (!Pt) {
+            setStatus(title + '\n' + bandText + '\n= ∞ (k′ ≡ 0 mod N)');
+            return;
+        }
+        plotter.addPoint(Pt.x, Pt.y, scalarLabelShort(nk), null, nk);
+        plotter.draw();
+        setStatus(title + '\n' + bandText + '\n' + scalarStatusBlock(nk) + '\n' + describeKPosition(nk));
+    } catch (e) { setStatus(t('Ошибка: ') + e.message); console.error(e); }
+}
+
+function uiMirror() { uiMirrorOp('plain'); }
+function uiMirrorD() { uiMirrorOp('d'); }
+
 
 function findLoggedPointByX(x) {
     for (let i = plotter.points.length - 1; i >= 0; i--) {
@@ -3192,10 +3303,50 @@ function uiOpRootInt() {
    ============================================================ */
 const EPS_LOG2 = 1e-6;
 
-let autoHalfTimer = null;
-let autoHalfCount = 0;
-let autoMul2Timer = null;
-let autoMul2Count = 0;
+let autoTimer = null;
+let autoCount = 0;
+let autoOp = 'div';
+
+const AUTO_OPS = {
+    div: { id: 'autoOpDiv', sym: '÷' },
+    mul: { id: 'autoOpMul', sym: '×' },
+    sub: { id: 'autoOpSub', sym: '−' },
+    add: { id: 'autoOpAdd', sym: '+' }
+};
+
+function autoPreviewText() {
+    const raw = (document.getElementById('autoValue')?.value || '').trim();
+    return `k ${AUTO_OPS[autoOp].sym} ${raw || '?'}`;
+}
+
+function updateAutoOpUI() {
+    for (const [op, info] of Object.entries(AUTO_OPS)) {
+        const btn = document.getElementById(info.id);
+        if (btn) btn.classList.toggle('active', op === autoOp);
+    }
+    const preview = document.getElementById('autoOpPreview');
+    if (preview) preview.textContent = autoPreviewText();
+}
+
+function uiSelectAutoOp(op) {
+    if (!AUTO_OPS[op]) return;
+    if (autoTimer !== null) {
+        clearInterval(autoTimer);
+        autoTimer = null;
+        setAutoBtnRunning('autoBtn', false, 'Авто');
+    }
+    autoOp = op;
+    updateAutoOpUI();
+    setStatus(t('Действие: {1}', autoPreviewText()));
+}
+
+function stopAutoTimer() {
+    if (autoTimer !== null) {
+        clearInterval(autoTimer);
+        autoTimer = null;
+    }
+    setAutoBtnRunning('autoBtn', false, 'Авто');
+}
 
 function parseLog2Target(rawValue, fieldName) {
     const s = String(rawValue || '').trim();
@@ -3239,215 +3390,130 @@ function setAutoBtnRunning(btnId, running, labelOn) {
     }
 }
 
-function stopAllAuto() {
-    if (autoHalfTimer !== null) {
-        clearInterval(autoHalfTimer);
-        autoHalfTimer = null;
-        setAutoBtnRunning('autoHalfBtn', false, 'Авто ÷2');
-    }
-    if (autoMul2Timer !== null) {
-        clearInterval(autoMul2Timer);
-        autoMul2Timer = null;
-        setAutoBtnRunning('autoMul2Btn', false, 'Авто ×2');
-    }
-}
-
-function uiToggleAutoHalf() {
-    if (autoHalfTimer !== null) {
-        clearInterval(autoHalfTimer);
-        autoHalfTimer = null;
-        setAutoBtnRunning('autoHalfBtn', false, 'Авто ÷2');
-        setStatus(t('Авто ÷2 остановлено вручную.') + '\n' + t('Выполнено делений: {1}', autoHalfCount));
+function uiToggleAuto() {
+    if (autoTimer !== null) {
+        stopAutoTimer();
+        setStatus(t('Авто остановлено вручную.') + '\n' + t('Выполнено операций: {1}', autoCount));
         return;
     }
 
     const us = parseFloat(document.getElementById('autoIntervalUs').value);
     if (!isFinite(us) || us <= 0) {
-        setStatus(t('Ошибка: введите положительный интервал в микросекундах (÷2).'));
+        setStatus(t('Ошибка: введите положительный интервал в микросекундах.'));
         return;
     }
 
-    const tParsed = parseLog2Target(document.getElementById('autoHalfTarget').value, t('log₂-цель (÷2)'));
+    const tParsed = parseLog2Target(document.getElementById('autoTarget').value, t('log₂-цель'));
     if (tParsed.error) { setStatus(tParsed.error); return; }
     const target = tParsed.target;
 
+    let n;
     try {
-        const k0 = parseScalar(scalarIn.value);
-        if (k0 === 0n) {
-            setStatus(t('Ошибка: k = 0 (∞), авто-режим бессмыслен.'));
-            return;
-        }
+        const raw = document.getElementById('autoValue').value.trim();
+        if (!raw) throw new Error(t('введите значение для действия'));
+        n = mod(parseScalar(raw), N);
     } catch (e) {
         setStatus(t('Ошибка: ') + e.message);
         return;
     }
 
-    stopAllAuto();
+    if (autoOp === 'div' && n === 0n) {
+        setStatus(t('Ошибка: делитель ≡ 0 mod N.'));
+        return;
+    }
+    if ((autoOp === 'div' || autoOp === 'mul') && n === 1n) {
+        setStatus(t('Ошибка: значение 1 не меняет k.'));
+        return;
+    }
+    if ((autoOp === 'add' || autoOp === 'sub') && n === 0n) {
+        setStatus(t('Ошибка: значение 0 не меняет k.'));
+        return;
+    }
+
+    let k0;
+    try {
+        k0 = mod(parseScalar(scalarIn.value), N);
+    } catch (e) {
+        setStatus(t('Ошибка: ') + e.message);
+        return;
+    }
+    if (k0 === 0n) {
+        setStatus(t('Ошибка: k = 0 (∞), авто-режим бессмыслен.'));
+        return;
+    }
+
+    stopAutoTimer();
 
     const { divsPerTick, intervalMs } = computeBatch(us);
-    autoHalfCount = 0;
-    document.getElementById('autoHalfInfo').textContent = '×0';
-    setAutoBtnRunning('autoHalfBtn', true, 'Авто ÷2');
+    autoCount = 0;
+    document.getElementById('autoInfo').textContent = '×0';
+    setAutoBtnRunning('autoBtn', true, 'Авто');
 
-    const inv2 = (N + 1n) / 2n;
-    const batchHalf = modpow(inv2, BigInt(divsPerTick), N);
-
-    const divsPerSec = divsPerTick * (1000 / intervalMs);
+    const invN = (autoOp === 'div') ? invMod(n, N) : null;
+    const preview = autoPreviewText();
     const goalStr = (target === null) ? t('нет (∞)') : `log₂(k) ≤ ${target}`;
+    const opsPerSec = divsPerTick * (1000 / intervalMs);
 
     setStatus(
-        t('Авто ÷2 запущено.') + '\n' +
-        t('Интервал: {1} µs (→ {2} дел./сек)', us, divsPerSec.toFixed(0)) + '\n' +
+        t('Авто запущено: {1}', preview) + '\n' +
+        t('Интервал: {1} µs (→ {2} операций/сек)', us, opsPerSec.toFixed(0)) + '\n' +
         t('Цель: {1}', goalStr) + '\n' +
-        t('Проверка цели — после первого деления (не до).') + '\n' +
+        t('Проверка цели — после действия.') + '\n' +
         t('Точки в лог НЕ добавляются.')
     );
 
-    autoHalfTimer = setInterval(() => {
+    autoTimer = setInterval(() => {
         try {
-            let k = parseScalar(scalarIn.value);
+            let k = mod(parseScalar(scalarIn.value), N);
             if (k === 0n) {
-                clearInterval(autoHalfTimer); autoHalfTimer = null;
-                setAutoBtnRunning('autoHalfBtn', false, 'Авто ÷2');
-                setStatus(t('Авто ÷2 остановлено: k = 0 (∞).'));
+                stopAutoTimer();
+                setStatus(t('Авто остановлено: k = 0 (∞).'));
                 return;
             }
-
-            const log2now = (k === 1n) ? 0 : log2BigInt(k);
 
             let batch = divsPerTick;
-            if (target !== null) {
-                const remaining = log2now - target;
-                batch = Math.min(divsPerTick, Math.max(1, Math.ceil(remaining - EPS_LOG2)));
+            if (autoOp === 'div' && target !== null && n > 1n) {
+                const logN = log2BigInt(n);
+                const remaining = ((k === 1n) ? 0 : log2BigInt(k)) - target;
+                const need = Math.max(1, Math.ceil(remaining / logN - EPS_LOG2));
+                batch = Math.min(batch, need);
             }
 
-            if (batch === divsPerTick && divsPerTick > 1) {
-                k = mod(k * batchHalf, N);
+            if (autoOp === 'div') {
+                k = mod(k * modpow(invN, BigInt(batch), N), N);
+            } else if (autoOp === 'mul') {
+                k = mod(k * modpow(n, BigInt(batch), N), N);
+            } else if (autoOp === 'add') {
+                k = mod(k + n * BigInt(batch), N);
             } else {
-                for (let i = 0; i < batch; i++) k = mod(k * inv2, N);
+                k = mod(k - n * BigInt(batch), N);
             }
-            setScalarInput(k);
 
+            setScalarInput(k);
             const Pt = scalarMul(k);
             updateCircles(k, Pt ? Pt.x : null, Pt ? Pt.y : null);
 
-            autoHalfCount += batch;
-            document.getElementById('autoHalfInfo').textContent = '×' + autoHalfCount;
+            autoCount += batch;
+            document.getElementById('autoInfo').textContent = '×' + autoCount;
 
             const log2new = (k === 1n) ? 0 : log2BigInt(k);
             if (targetReached(log2new, target)) {
-                clearInterval(autoHalfTimer); autoHalfTimer = null;
-                setAutoBtnRunning('autoHalfBtn', false, 'Авто ÷2');
+                stopAutoTimer();
                 setStatus(
-                    t('Авто ÷2 остановлено: достигнута цель log₂(k) ≤ {1}.', target) + '\n' +
+                    t('Авто остановлено: достигнута цель log₂(k) ≤ {1}.', target) + '\n' +
                     scalarStatusBlock(k) + '\n' +
                     `log₂(k) = ${log2new.toFixed(3)}\n` +
-                    t('Выполнено делений: {1}', autoHalfCount)
+                    t('Выполнено операций: {1}', autoCount) +
+                    (autoOp === 'mul' ? '\n' + t('(вероятно, k обернулся через N — log₂ резко упал)') : '')
                 );
             }
         } catch (e) {
             console.error(e);
-            clearInterval(autoHalfTimer); autoHalfTimer = null;
-            setAutoBtnRunning('autoHalfBtn', false, 'Авто ÷2');
-            setStatus(t('Авто ÷2 остановлено из-за ошибки: ') + e.message);
+            stopAutoTimer();
+            setStatus(t('Авто остановлено из-за ошибки: ') + e.message);
         }
     }, intervalMs);
 }
-
-function uiToggleAutoMul2() {
-    if (autoMul2Timer !== null) {
-        clearInterval(autoMul2Timer);
-        autoMul2Timer = null;
-        setAutoBtnRunning('autoMul2Btn', false, 'Авто ×2');
-        setStatus(t('Авто ×2 остановлено вручную.') + '\n' + t('Выполнено умножений: {1}', autoMul2Count));
-        return;
-    }
-
-    const us = parseFloat(document.getElementById('autoMul2IntervalUs').value);
-    if (!isFinite(us) || us <= 0) {
-        setStatus(t('Ошибка: введите положительный интервал в микросекундах (×2).'));
-        return;
-    }
-
-    const tParsed = parseLog2Target(document.getElementById('autoMul2Target').value, t('log₂-цель (×2)'));
-    if (tParsed.error) { setStatus(tParsed.error); return; }
-    const target = tParsed.target;
-
-    try {
-        const k0 = parseScalar(scalarIn.value);
-        if (k0 === 0n) {
-            setStatus(t('Ошибка: k = 0 (∞), авто-режим бессмыслен.'));
-            return;
-        }
-    } catch (e) {
-        setStatus(t('Ошибка: ') + e.message);
-        return;
-    }
-
-    stopAllAuto();
-
-    const { divsPerTick, intervalMs } = computeBatch(us);
-    autoMul2Count = 0;
-    document.getElementById('autoMul2Info').textContent = '×0';
-    setAutoBtnRunning('autoMul2Btn', true, 'Авто ×2');
-
-    const batchMul2 = modpow(2n, BigInt(divsPerTick), N);
-
-    const divsPerSec = divsPerTick * (1000 / intervalMs);
-    const goalStr = (target === null) ? t('нет (∞)') : `log₂(k) ≤ ${target}`;
-
-    setStatus(
-        t('Авто ×2 запущено.') + '\n' +
-        t('Интервал: {1} µs (→ {2} умнож./сек)', us, divsPerSec.toFixed(0)) + '\n' +
-        t('Цель: {1}', goalStr) + '\n' +
-        t('Проверка цели — после первого умножения (не до).') + '\n' +
-        t('Точки в лог НЕ добавляются.')
-    );
-
-    autoMul2Timer = setInterval(() => {
-        try {
-            let k = parseScalar(scalarIn.value);
-            if (k === 0n) {
-                clearInterval(autoMul2Timer); autoMul2Timer = null;
-                setAutoBtnRunning('autoMul2Btn', false, 'Авто ×2');
-                setStatus(t('Авто ×2 остановлено: k = 0 (∞).'));
-                return;
-            }
-
-            if (divsPerTick > 1) {
-                k = mod(k * batchMul2, N);
-            } else {
-                k = mod(k * 2n, N);
-            }
-            setScalarInput(k);
-
-            const Pt = scalarMul(k);
-            updateCircles(k, Pt ? Pt.x : null, Pt ? Pt.y : null);
-
-            autoMul2Count += divsPerTick;
-            document.getElementById('autoMul2Info').textContent = '×' + autoMul2Count;
-
-            const log2new = (k === 1n) ? 0 : log2BigInt(k);
-            if (targetReached(log2new, target)) {
-                clearInterval(autoMul2Timer); autoMul2Timer = null;
-                setAutoBtnRunning('autoMul2Btn', false, 'Авто ×2');
-                setStatus(
-                    t('Авто ×2 остановлено: достигнута цель log₂(k) ≤ {1}.', target) + '\n' +
-                    scalarStatusBlock(k) + '\n' +
-                    `log₂(k) = ${log2new.toFixed(3)}\n` +
-                    t('Выполнено умножений: {1}', autoMul2Count) + '\n' +
-                    t('(вероятно, k обернулся через N — log₂ резко упал)')
-                );
-            }
-        } catch (e) {
-            console.error(e);
-            clearInterval(autoMul2Timer); autoMul2Timer = null;
-            setAutoBtnRunning('autoMul2Btn', false, 'Авто ×2');
-            setStatus(t('Авто ×2 остановлено из-за ошибки: ') + e.message);
-        }
-    }, intervalMs);
-}
-
 /* ============================================================
    Адаптивная подгонка размеров
    ============================================================ */
