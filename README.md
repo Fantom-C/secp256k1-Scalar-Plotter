@@ -24,7 +24,8 @@ Browser-only **secp256k1** scalar calculator and point visualizer. Single self-c
 - **Point log** with `k` (DEC/HEX/SIGNED), `X`, `Y` and Bitcoin data:
   - **P2PKH** (compressed/uncompressed), **P2SH-P2WPKH**, **P2WPKH**, **P2TR**;
   - **WIF** private keys (compressed/uncompressed) when the point scalar is known;
-  - addresses open on Blockchain.com, WIF copies to clipboard on click.
+  - addresses open on Blockchain.com, WIF copies to clipboard on click;
+  - total received amount next to each address (off by default; enable with the **Received** button next to EN/RU; `blockchain.info/q/getreceivedbyaddress`, fallback mempool.space/blockstream.info; click to refresh).
 - **Visualization**: point plot, logarithmic scalar ring, `X`/`Y` rings.
 - **Interface**: English/Russian (English by default), responsive layout.
 
@@ -35,6 +36,8 @@ Open `index.html` in a browser. Nothing else is required.
 ### Security warning
 
 The app displays **private keys (WIF)**. Everything runs locally in your browser, but use it responsibly: never publish generated private keys, do not store real funds on browser-generated keys without understanding the risks, and prefer hardware/offline wallets for real money.
+
+Received-amount lookups send the generated addresses to public APIs (`blockchain.info`, fallback `mempool.space`/`blockstream.info`). Use the tool offline if you do not want addresses to leave your device.
 
 ### Donations
 
@@ -64,7 +67,8 @@ If you find this project useful, you can support it:
 - **Лог точек** с `k` (DEC/HEX/SIGNED), `X`, `Y` и данными Bitcoin:
   - **P2PKH** (compressed/uncompressed), **P2SH-P2WPKH**, **P2WPKH**, **P2TR**;
   - **WIF** приватные ключи (compressed/uncompressed), если скаляр точки известен;
-  - адреса открываются на Blockchain.com, WIF копируется по клику.
+  - адреса открываются на Blockchain.com, WIF копируется по клику;
+  - сумма всех полученных сатоши рядом с каждым адресом (по умолчанию выключено; включается кнопкой **«Получено»** рядом с EN/RU; `blockchain.info/q/getreceivedbyaddress`, резерв mempool.space/blockstream.info; клик — обновить).
 - **Визуализация**: график точек, логарифмическая круговая шкала скаляра, шкалы `X`/`Y`.
 - **Интерфейс**: English/Русский (по умолчанию English), адаптивная вёрстка.
 
@@ -75,6 +79,8 @@ If you find this project useful, you can support it:
 ### Безопасность
 
 Приложение показывает **приватные ключи (WIF)**. Всё работает локально в браузере, но используйте ответственно: не публикуйте сгенерированные ключи, не храните реальные средства на ключах, созданных в браузере, без понимания рисков, и предпочитайте аппаратные/офлайн-кошельки.
+
+Запросы суммы полученных отправляют сгенерированные адреса в публичные API (`blockchain.info`, резерв `mempool.space`/`blockstream.info`). Если не хотите передавать адреса наружу — используйте инструмент офлайн.
 
 ### Донаты
 
